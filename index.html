@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WOLFFY: Not Afraid | Urban Concrete 3.0</title>
+    
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Oswald:wght@400;600;700&family=Outfit:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <!-- Icons & FX -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        urban: {
+                            black: '#030304',
+                            wet: '#0a0b10',      /* Wet asphalt base */
+                            red: '#FF1744',      /* Neon Red */
+                            cyan: '#00E5FF',     /* Neon Cyan */
+                            concrete: '#1a1a24'  /* Dark gray */
+                        }
+                    },
+                    fontFamily: {
+                        heading: ['Outfit', 'sans-serif'],
+                        impact: ['Oswald', 'sans-serif'],
+                        ui: ['Manrope', 'sans-serif'],
+                        mono: ['"Share Tech Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'wet': '0 20px 40px rgba(0,0,0,0.8), inset 0 2px 2px rgba(255,255,255,0.05)',
+                        'neon-red': '0 0 20px rgba(255, 23, 68, 0.4), inset 0 0 10px rgba(255, 23, 68, 0.1)',
+                        'neon-cyan': '0 0 20px rgba(0, 229, 255, 0.4), inset 0 0 10px rgba(0, 229, 255, 0.1)',
+                        'mpc-pad': '0 6px 0 #000, 0 10px 15px rgba(0,0,0,0.6)',
+                        'mpc-pad-active': '0 2px 0 #000, 0 4px 10px rgba(0,0,0,0.6)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #030304;
+            color: #E5E7EB;
+            overflow: hidden;
+            font-family: 'Manrope', sans-serif;
+            user-select: none;
+        }
+
+        /* --- WET ASPHALT ENVIRONMENT --- */
+        .wet-environment {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background: radial-gradient(circle at 50% 0%, rgba(255, 23, 68, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 100%, rgba(0, 229, 255, 0.05) 0%, transparent 50%);
+        }
+        
+        .rain-drop {
+            position: absolute; width: 2px; height: 30px; 
+            background: linear-gradient(to bottom, transparent, rgba(0, 229, 255, 0.1)); 
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(15deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(110vh) rotate(15deg); opacity: 0; }
+        }
+
+        /* --- GLASSMORPHISM (Wet Panels) --- */
+        .glass-panel {
+            background: rgba(15, 16, 22, 0.6);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--tw-shadow-wet);
+            position: relative;
+            overflow: visible; /* Fix for cut-off elements */
+        }
+        .glass-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 30%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.02), transparent);
+            pointer-events: none;
+        }
+
+        /* --- ANTI-CUTOFF SLIDES --- */
+        .slide-container {
+            display: flex; flex-direction: column; overflow-y: auto; height: calc(100vh - 100px);
+            scroll-behavior: smooth; transition: background 1s ease;
+        }
+        .slide { 
+            display: none; opacity: 0; width: 100%; min-height: 100%; 
+            flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; 
+        }
+        .slide.active { display: flex; animation: slideIn 0.5s cubic-bezier(0.2, 1, 0.3, 1) forwards; }
+        .slide::before, .slide::after { content: ''; margin: auto; }
+        .slide > * { flex-shrink: 0; max-width: 100%; z-index: 20; }
+        
+        @keyframes slideIn {
+            0% { opacity: 0; transform: scale(0.98) translateY(20px); filter: blur(5px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+        }
+
+        /* --- DYNAMIC FX --- */
+        .flicker { animation: flicker 4s infinite; }
+        @keyframes flicker {
+            0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; }
+            20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.4; }
+        }
+
+        .paparazzi-flash { animation: cameraFlash 0.5s ease-out; }
+        @keyframes cameraFlash {
+            0% { background-color: rgba(255,255,255,0.9); box-shadow: inset 0 0 100px #fff; }
+            100% { background-color: transparent; box-shadow: none; }
+        }
+
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; border-color: #FF1744 !important; color: #FF1744 !important; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
+
+        /* --- MPC PADS (Haptic buttons) --- */
+        .mpc-pad {
+            background: linear-gradient(180deg, #1f1f25, #111116);
+            border: 1px solid #333; box-shadow: var(--tw-shadow-mpc-pad);
+            transition: all 0.1s; cursor: pointer;
+        }
+        .mpc-pad:active { transform: translateY(4px); box-shadow: var(--tw-shadow-mpc-pad-active); }
+        .mpc-pad:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+        .mpc-pad.selected-red { border-color: #FF1744; box-shadow: var(--tw-shadow-neon-red); color: #FF1744; background: #29000a; }
+        .mpc-pad.selected-cyan { border-color: #00E5FF; box-shadow: var(--tw-shadow-neon-cyan); color: #00E5FF; background: #002229; }
+
+        /* --- SPRAY PAINT ANIMATION --- */
+        .spray-wall { position: relative; overflow: hidden; cursor: crosshair; }
+        .spray-mask { 
+            position: absolute; inset: 0; background: #FF1744; 
+            transform-origin: left; transform: scaleX(0); transition: transform 0.6s cubic-bezier(0.1, 0.9, 0.2, 1);
+            z-index: 0; mix-blend-mode: color-burn;
+        }
+        .spray-wall.sprayed .spray-mask { transform: scaleX(1); }
+        .spray-content { position: relative; z-index: 10; }
+
+        /* --- COURAGE TUNER --- */
+        .tuner-track { background: #000; border-radius: 30px; border: 2px solid #333; position: relative; cursor: pointer; box-shadow: inset 0 5px 15px rgba(0,0,0,0.9); }
+        .tuner-knob { 
+            background: linear-gradient(to bottom, #444, #222); border: 2px solid #666; border-radius: 50%; 
+            position: absolute; transition: transform 0.4s cubic-bezier(0.3, 1.5, 0.6, 1);
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        .lyric-hl { color: #fff; cursor: pointer; border-bottom: 2px dashed #00E5FF; transition: 0.3s; padding: 0 2px; }
+        .lyric-hl:hover { color: #00E5FF; text-shadow: 0 0 10px #00E5FF; background: rgba(0,229,255,0.1); }
+        
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .vinyl-spin { animation: spin 4s linear infinite; }
+        .vinyl-paused { animation-play-state: paused; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .drawer-right { transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .drawer-right.open { transform: translateX(0); }
+        .drawer-left { transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .drawer-left.open { transform: translateX(0); }
+    </style>
+</head>
+<body class="flex flex-col h-screen w-screen bg-urban-black selection:bg-urban-red selection:text-white">
+
+    <div class="wet-environment" id="rain-bg"></div>
+
+    <!-- MAIN CONSOLE -->
+    <main class="flex-grow w-full relative z-10 slide-container" id="stage">
+        
+        <div class="absolute top-6 left-8 z-0 text-white/5 font-black font-impact text-7xl tracking-widest pointer-events-none uppercase hidden md:block">
+            WOLFFY<span class="text-urban-cyan">_AAA</span>
+        </div>
+
+        <!-- TRACK 01: COVER ART & ADVISORY -->
+        <section class="slide active">
+            <div class="glass-panel p-8 md:p-12 rounded-[2rem] w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-10 relative">
+                
+                <!-- Explicit Warning Tag -->
+                <div class="absolute -top-4 -right-4 bg-white text-black font-impact font-black uppercase text-xl px-4 py-2 flex flex-col items-center leading-none border-4 border-black shadow-[0_10px_20px_rgba(0,0,0,0.5)] transform rotate-3 z-50">
+                    <span class="text-[10px] tracking-widest">Parental Advisory</span>
+                    EXPLICIT CONTENT
+                </div>
+
+                <div class="w-64 h-64 md:w-80 md:h-80 shrink-0 border-8 border-[#111] rounded-lg shadow-wet overflow-hidden relative group">
+                    <img src="https://static.posters.cz/image/1300/8504.jpg" class="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 transform group-hover:scale-105">
+                </div>
+                <div class="text-center md:text-left flex-1">
+                    <span class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] bg-urban-red/10 px-3 py-1 rounded">Volume B1</span>
+                    <h1 class="font-impact font-black text-6xl md:text-8xl text-white mt-4 mb-2 uppercase tracking-tight">Not <span class="text-urban-red flicker">Afraid</span></h1>
+                    <p class="font-heading text-xl text-gray-400 mb-8 tracking-widest uppercase">Eminem</p>
+                    
+                    <div class="space-y-2 border-l-2 border-urban-cyan pl-4 text-left">
+                        <p class="font-mono text-sm"><strong class="text-urban-cyan">Target:</strong> Intermediate (B1)</p>
+                        <p class="font-mono text-sm"><strong class="text-urban-cyan">Grammar:</strong> Adjective + Infinitive</p>
+                        <p class="font-mono text-sm"><strong class="text-urban-cyan">Focus:</strong> High-Pressure Speaking</p>
+                    </div>
+
+                    <div class="mt-6 text-left border border-white/10 p-4 rounded-lg bg-[#111]">
+                        <p class="font-mono text-xs text-gray-500 uppercase tracking-widest"><i class="fa-solid fa-triangle-exclamation text-urban-red mr-2"></i>Teacher Note:</p>
+                        <p class="font-ui text-sm text-gray-400 mt-1">This track contains raw, explicit language (e.g., profanity, "dick") reflecting urban reality. Proceed accordingly.</p>
+                    </div>
+                </div>
+            </div>
+            <p class="mt-8 text-gray-500 font-mono text-xs uppercase tracking-widest animate-pulse"><i class="fa-solid fa-headphones mr-2"></i>Double-click any word to scan databanks</p>
+        </section>
+
+        <!-- TRACK 02: TEACHER TERMINAL -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 02</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">System Briefing</h1>
+            
+            <div class="glass-panel p-10 md:p-14 rounded-[2rem] w-full max-w-4xl mx-auto border-t-4 border-urban-cyan shadow-neon-cyan text-left">
+                <div class="flex items-center gap-4 mb-8">
+                    <i class="fa-solid fa-terminal text-4xl text-urban-cyan"></i>
+                    <h3 class="font-impact text-3xl text-white uppercase tracking-widest">Mission Details</h3>
+                </div>
+                <div class="space-y-6 font-mono text-lg text-gray-300">
+                    <p><span class="text-urban-cyan font-bold">> Objective:</span> Overcome hesitation in speaking.</p>
+                    <p><span class="text-urban-cyan font-bold">> Grammar Mechanics:</span> We will fuse emotions (Adjectives) with actions (Infinitives) to explain the <span class="text-white bg-urban-cyan/20 px-2">REASON</span> for a feeling.</p>
+                    <p><span class="text-urban-cyan font-bold">> Example:</span> "I am <strong class="text-white">ready to</strong> go."</p>
+                    <hr class="border-[#333]">
+                    <p class="text-sm text-gray-500">> Use the left drawer (Terminal) to drop Praise elements during the session.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 03: VIBE CHECK (Dilemma) -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 03</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">The Dilemma</h1>
+            
+            <p class="font-ui text-xl md:text-2xl text-gray-300 mb-10 text-center max-w-3xl font-medium">When life hits you with a "storm" (a massive problem), what is your instinct?</p>
+            
+            <div class="space-y-4 w-full max-w-4xl mx-auto options-group">
+                <div class="mpc-pad p-6 rounded-2xl flex items-center gap-6 mcq-btn group" onclick="selectMCQ(this, 'cyan', 'vibe-hub')">
+                    <div class="w-12 h-12 bg-black rounded-full flex items-center justify-center font-impact text-xl text-gray-500 group-hover:text-urban-cyan border border-[#333]">A</div>
+                    <p class="font-ui font-bold text-lg text-gray-300">I freeze. The fear paralyzes me.</p>
+                </div>
+                <div class="mpc-pad p-6 rounded-2xl flex items-center gap-6 mcq-btn group" onclick="selectMCQ(this, 'cyan', 'vibe-hub')">
+                    <div class="w-12 h-12 bg-black rounded-full flex items-center justify-center font-impact text-xl text-gray-500 group-hover:text-urban-cyan border border-[#333]">B</div>
+                    <p class="font-ui font-bold text-lg text-gray-300">I search for cover and wait for it to pass.</p>
+                </div>
+                <div class="mpc-pad p-6 rounded-2xl flex items-center gap-6 mcq-btn group" onclick="selectMCQ(this, 'red', 'vibe-hub')">
+                    <div class="w-12 h-12 bg-black rounded-full flex items-center justify-center font-impact text-xl text-gray-500 group-hover:text-urban-red border border-[#333]">C</div>
+                    <p class="font-ui font-bold text-lg text-gray-300">I take a stand. I walk right through it.</p>
+                </div>
+            </div>
+            <div id="vibe-hub" class="hidden mt-8 text-center font-mono text-urban-red font-bold tracking-widest uppercase animate-pulse">> SELECTION REGISTERED. PROCEED.</div>
+        </section>
+
+        <!-- TRACK 04: VIBE CHECK (Speaking) -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 04</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Vocal Check</h1>
+            
+            <div class="w-full max-w-4xl glass-panel p-10 md:p-14 border-l-4 border-l-urban-cyan rounded-[2rem] text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                <i class="fa-solid fa-microphone-lines text-6xl text-urban-cyan mb-8"></i>
+                <p class="font-heading font-bold text-3xl md:text-4xl text-white leading-tight mb-8">"Why did you choose that reaction? Give a real-life example."</p>
+                <div class="bg-[#111] border border-[#333] p-4 rounded-xl inline-block">
+                    <span class="font-mono text-gray-500 text-xs font-bold uppercase tracking-widest block mb-2">Starter</span>
+                    <p class="font-ui text-gray-300 italic">"I chose that reaction because once, when I faced..."</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 05: THE STORY -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 05</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">The Context</h1>
+            
+            <div class="glass-panel p-10 md:p-14 rounded-[2rem] w-full max-w-4xl mx-auto border-t-2 border-[#333] text-center">
+                <h3 class="font-impact text-4xl text-white uppercase tracking-widest mb-6">Recovery (2010)</h3>
+                <p class="font-ui text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto">This song is a pure declaration of fearlessness. The artist is leaving his dark past behind, stepping up, and inviting anyone who feels lost to take his hand.</p>
+                <div class="mt-8 pt-8 border-t border-[#222]">
+                    <p class="font-mono text-sm text-urban-red uppercase tracking-widest">Keyword: Resilience</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 06: STREET LEXICON I -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 06</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-6 uppercase tracking-widest text-center">Street Lexicon I</h1>
+            <p class="font-mono text-gray-400 text-sm mb-10 text-center uppercase tracking-widest">Select a word and match it to its meaning</p>
+
+            <!-- Word Bank -->
+            <div class="flex flex-wrap justify-center gap-4 mb-8 w-full max-w-4xl mx-auto">
+                <button class="mpc-pad px-6 py-3 rounded-xl font-impact font-bold text-2xl uppercase tracking-widest text-gray-300 hover:text-white lex-word-btn transition-colors" onclick="selectLexWord(this, 'afraid')">Afraid</button>
+                <button class="mpc-pad px-6 py-3 rounded-xl font-impact font-bold text-2xl uppercase tracking-widest text-gray-300 hover:text-white lex-word-btn transition-colors" onclick="selectLexWord(this, 'take a stand')">Take a stand</button>
+                <button class="mpc-pad px-6 py-3 rounded-xl font-impact font-bold text-2xl uppercase tracking-widest text-gray-300 hover:text-white lex-word-btn transition-colors" onclick="selectLexWord(this, 'hand')">Hand</button>
+            </div>
+
+            <!-- Definitions List -->
+            <div class="flex flex-col gap-5 w-full max-w-4xl mx-auto">
+                <div class="glass-panel p-6 rounded-xl border border-[#333]">
+                    <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+                        <button class="w-full md:w-56 shrink-0 border-2 border-dashed border-[#555] bg-black/50 text-gray-500 font-impact text-xl uppercase tracking-widest py-4 rounded-xl hover:border-urban-cyan hover:text-urban-cyan transition-colors" onclick="attemptLexMatch(this, 'take a stand', 'lex-f-1-1')">
+                            [ MATCH HERE ]
+                        </button>
+                        <div class="flex-1 text-center md:text-left">
+                            <p class="font-ui text-xl text-gray-300 mb-2">To defend your opinion; fight for what is right.</p>
+                            <div id="lex-f-1-1" class="hidden mt-4 pt-4 border-t border-[#333]">
+                                <span class="font-mono text-urban-cyan text-[10px] font-bold uppercase tracking-widest block mb-1">Follow-up Discussion</span>
+                                <p class="font-heading font-bold text-white text-lg">When was the last time you took a stand for someone else?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-xl border border-[#333]">
+                    <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+                        <button class="w-full md:w-56 shrink-0 border-2 border-dashed border-[#555] bg-black/50 text-gray-500 font-impact text-xl uppercase tracking-widest py-4 rounded-xl hover:border-urban-cyan hover:text-urban-cyan transition-colors" onclick="attemptLexMatch(this, 'afraid', 'lex-f-1-2')">
+                            [ MATCH HERE ]
+                        </button>
+                        <div class="flex-1 text-center md:text-left">
+                            <p class="font-ui text-xl text-gray-300 mb-2">Feeling fear or anxiety; scared.</p>
+                            <div id="lex-f-1-2" class="hidden mt-4 pt-4 border-t border-[#333]">
+                                <span class="font-mono text-urban-cyan text-[10px] font-bold uppercase tracking-widest block mb-1">Follow-up Discussion</span>
+                                <p class="font-heading font-bold text-white text-lg">What is the difference between a rational and an irrational fear?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-xl border border-[#333]">
+                    <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+                        <button class="w-full md:w-56 shrink-0 border-2 border-dashed border-[#555] bg-black/50 text-gray-500 font-impact text-xl uppercase tracking-widest py-4 rounded-xl hover:border-urban-cyan hover:text-urban-cyan transition-colors" onclick="attemptLexMatch(this, 'hand', 'lex-f-1-3')">
+                            [ MATCH HERE ]
+                        </button>
+                        <div class="flex-1 text-center md:text-left">
+                            <p class="font-ui text-xl text-gray-300 mb-2">Used metaphorically as help or support.</p>
+                            <div id="lex-f-1-3" class="hidden mt-4 pt-4 border-t border-[#333]">
+                                <span class="font-mono text-urban-cyan text-[10px] font-bold uppercase tracking-widest block mb-1">Follow-up Discussion</span>
+                                <p class="font-heading font-bold text-white text-lg">Who usually takes your hand when you are struggling?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 07: LEXICON DEBATE I -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-cyan text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 07</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Debate I</h1>
+            
+            <div class="w-full max-w-4xl mx-auto space-y-6">
+                <div class="mpc-pad p-8 rounded-2xl border-l-4 border-l-urban-cyan">
+                    <p class="font-impact font-bold text-2xl text-white mb-2 tracking-wide uppercase">Q1. Is taking a stand always violent or aggressive?</p>
+                    <p class="font-ui text-gray-400">Give an example of taking a peaceful stand.</p>
+                </div>
+                <div class="mpc-pad p-8 rounded-2xl border-l-4 border-l-urban-cyan">
+                    <p class="font-impact font-bold text-2xl text-white mb-2 tracking-wide uppercase">Q2. Are we taught to be afraid of failure?</p>
+                    <p class="font-ui text-gray-400">Discuss how society views making mistakes.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 08: STREET LEXICON II -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 08</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-6 uppercase tracking-widest text-center">Street Lexicon II</h1>
+            <p class="font-mono text-gray-400 text-sm mb-10 text-center uppercase tracking-widest">Select a word and match it to its meaning</p>
+
+            <!-- Word Bank -->
+            <div class="flex flex-wrap justify-center gap-4 mb-8 w-full max-w-4xl mx-auto">
+                <button class="mpc-pad px-6 py-3 rounded-xl font-impact font-bold text-2xl uppercase tracking-widest text-gray-300 hover:text-white lex-word-btn transition-colors" onclick="selectLexWord(this, 'together')">Together</button>
+                <button class="mpc-pad px-6 py-3 rounded-xl font-impact font-bold text-2xl uppercase tracking-widest text-gray-300 hover:text-white lex-word-btn transition-colors" onclick="selectLexWord(this, 'storm')">Storm</button>
+                <button class="mpc-pad px-6 py-3 rounded-xl font-impact font-bold text-2xl uppercase tracking-widest text-gray-300 hover:text-white lex-word-btn transition-colors" onclick="selectLexWord(this, 'weather')">Weather</button>
+            </div>
+
+            <!-- Definitions List -->
+            <div class="flex flex-col gap-5 w-full max-w-4xl mx-auto">
+                <div class="glass-panel p-6 rounded-xl border border-[#333]">
+                    <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+                        <button class="w-full md:w-56 shrink-0 border-2 border-dashed border-[#555] bg-black/50 text-gray-500 font-impact text-xl uppercase tracking-widest py-4 rounded-xl hover:border-urban-cyan hover:text-urban-cyan transition-colors" onclick="attemptLexMatch(this, 'together', 'lex-f-2-1')">
+                            [ MATCH HERE ]
+                        </button>
+                        <div class="flex-1 text-center md:text-left">
+                            <p class="font-ui text-xl text-gray-300 mb-2">With another person; not alone.</p>
+                            <div id="lex-f-2-1" class="hidden mt-4 pt-4 border-t border-[#333]">
+                                <span class="font-mono text-urban-cyan text-[10px] font-bold uppercase tracking-widest block mb-1">Follow-up Discussion</span>
+                                <p class="font-heading font-bold text-white text-lg">Are humans designed to survive alone or together?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-xl border border-[#333]">
+                    <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+                        <button class="w-full md:w-56 shrink-0 border-2 border-dashed border-[#555] bg-black/50 text-gray-500 font-impact text-xl uppercase tracking-widest py-4 rounded-xl hover:border-urban-cyan hover:text-urban-cyan transition-colors" onclick="attemptLexMatch(this, 'storm', 'lex-f-2-2')">
+                            [ MATCH HERE ]
+                        </button>
+                        <div class="flex-1 text-center md:text-left">
+                            <p class="font-ui text-xl text-gray-300 mb-2">Metaphor for a difficult time in life.</p>
+                            <div id="lex-f-2-2" class="hidden mt-4 pt-4 border-t border-[#333]">
+                                <span class="font-mono text-urban-cyan text-[10px] font-bold uppercase tracking-widest block mb-1">Follow-up Discussion</span>
+                                <p class="font-heading font-bold text-white text-lg">What storms have you overcome recently?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-xl border border-[#333]">
+                    <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+                        <button class="w-full md:w-56 shrink-0 border-2 border-dashed border-[#555] bg-black/50 text-gray-500 font-impact text-xl uppercase tracking-widest py-4 rounded-xl hover:border-urban-cyan hover:text-urban-cyan transition-colors" onclick="attemptLexMatch(this, 'weather', 'lex-f-2-3')">
+                            [ MATCH HERE ]
+                        </button>
+                        <div class="flex-1 text-center md:text-left">
+                            <p class="font-ui text-xl text-gray-300 mb-2">Conditions outside. "Whatever weather" = No matter what happens.</p>
+                            <div id="lex-f-2-3" class="hidden mt-4 pt-4 border-t border-[#333]">
+                                <span class="font-mono text-urban-cyan text-[10px] font-bold uppercase tracking-widest block mb-1">Follow-up Discussion</span>
+                                <p class="font-heading font-bold text-white text-lg">Does the physical weather affect your emotional weather?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 09: LEXICON DEBATE II -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-cyan text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 09</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Debate II</h1>
+            
+            <div class="w-full max-w-4xl mx-auto space-y-6">
+                <div class="mpc-pad p-8 rounded-2xl border-l-4 border-l-urban-cyan">
+                    <p class="font-impact font-bold text-2xl text-white mb-2 tracking-wide uppercase">Q3. Do hard times ("storms") make relationships stronger or destroy them?</p>
+                    <p class="font-ui text-gray-400">Why do some people leave when the weather gets bad?</p>
+                </div>
+                <div class="mpc-pad p-8 rounded-2xl border-l-4 border-l-urban-cyan">
+                    <p class="font-impact font-bold text-2xl text-white mb-2 tracking-wide uppercase">Q4. Is it possible to survive the storm alone?</p>
+                    <p class="font-ui text-gray-400">Discuss the importance of being "together".</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 10: PRE-LISTENING -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 10</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Visual Mission</h1>
+            
+            <div class="glass-panel p-10 md:p-14 rounded-[2rem] w-full max-w-4xl mx-auto text-center border-t-2 border-urban-red shadow-neon-red">
+                <i class="fa-solid fa-eye text-5xl text-urban-red mb-6 flicker"></i>
+                <p class="font-ui text-2xl text-white leading-relaxed font-bold">In the music video, Eminem stands on the edge of a very tall building.</p>
+                <div class="mt-8 pt-8 border-t border-[#333]">
+                    <p class="font-impact font-black text-3xl uppercase tracking-widest text-gray-400">Does he fall, or does he fly?</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 11: THE VIDEO -->
+        <section class="slide h-full">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 11</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-6 uppercase tracking-widest text-center">The Intercept</h1>
+            
+            <div class="w-full max-w-5xl rounded-2xl overflow-hidden border-2 border-[#333] shadow-neon-cyan relative aspect-video z-20 bg-black">
+                <iframe class="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/j5-yKhDd64s?start=50&rel=0" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </section>
+
+        <!-- TRACK 12: VISUAL CHECK (MCQ) -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 12</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Observation</h1>
+            
+            <p class="font-ui text-xl md:text-2xl text-gray-300 mb-10 text-center max-w-3xl font-medium">What happens when he steps off the building?</p>
+            
+            <div class="space-y-4 w-full max-w-4xl mx-auto options-group">
+                <div class="mpc-pad p-6 rounded-2xl flex items-center gap-6 mcq-btn group" onclick="selectMCQ(this, 'red', 'vis-hub')">
+                    <p class="font-ui font-bold text-lg text-gray-300">He falls straight to the ground.</p>
+                </div>
+                <div class="mpc-pad p-6 rounded-2xl flex items-center gap-6 mcq-btn group" onclick="selectMCQ(this, 'cyan', 'vis-hub')">
+                    <p class="font-ui font-bold text-lg text-gray-300">He flies across the city.</p>
+                </div>
+            </div>
+            
+            <div id="vis-hub" class="hidden mt-8 w-full max-w-4xl glass-panel p-6 border-l-4 border-l-urban-cyan rounded-r-2xl">
+                <p class="font-ui font-bold text-white">> Correct! Flying is a visual metaphor for overcoming fear.</p>
+            </div>
+        </section>
+
+        <!-- TRACK 13: LYRIC ANALYZER I -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-cyan text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 13</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-6 uppercase tracking-widest text-center">Analyzer I</h1>
+            <p class="font-mono text-urban-cyan text-sm mb-10 text-center uppercase tracking-widest animate-pulse">Click cyan text for deep dive</p>
+
+            <div class="w-full max-w-4xl mx-auto glass-panel p-10 md:p-16 rounded-[2rem] text-center border-t-4 border-urban-cyan shadow-neon-cyan">
+                <div class="space-y-8 text-3xl md:text-5xl font-impact font-black text-gray-400 uppercase tracking-widest leading-tight">
+                    <p>I'm not <span class="lyric-hl" onclick="openLyric('afraid')">afraid</span></p>
+                    <p>to <span class="lyric-hl text-white border-urban-red" onclick="openLyric('stand')">take a stand</span></p>
+                    <p>Everybody, come take my hand</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 14: LYRIC ANALYZER II -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-cyan text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 14</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-6 uppercase tracking-widest text-center">Analyzer II</h1>
+
+            <div class="w-full max-w-4xl mx-auto glass-panel p-10 md:p-16 rounded-[2rem] text-center border-t-4 border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                <div class="space-y-8 text-3xl md:text-5xl font-impact font-black text-gray-400 uppercase tracking-widest leading-tight">
+                    <p>We'll walk this road <span class="lyric-hl" onclick="openLyric('together')">together</span></p>
+                    <p>Through the <span class="lyric-hl text-white" onclick="openLyric('storm')">storm</span></p>
+                    <p>Whatever <span class="lyric-hl" onclick="openLyric('weather')">weather</span>, cold or warm.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 15: COURAGE TUNER -->
+        <section class="slide" id="tuner-slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 15</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Courage Tuner</h1>
+            
+            <div class="glass-panel p-10 md:p-14 rounded-[2rem] w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12 transition-all duration-1000" id="t-panel">
+                
+                <div class="flex-1 w-full bg-black border-2 border-[#222] rounded-2xl h-48 md:h-64 relative overflow-hidden flex items-center justify-center p-8 shadow-inner">
+                    <!-- FEAR STATE -->
+                    <div id="t-fear" class="absolute inset-0 flex flex-col items-center justify-center transition-all duration-700">
+                        <p class="font-impact font-black text-3xl md:text-5xl text-gray-500 uppercase tracking-widest mb-4">"I take a stand."</p>
+                        <span class="font-mono text-gray-600 text-xs uppercase tracking-widest border border-[#333] px-3 py-1 rounded">Simple Action (Neutral)</span>
+                    </div>
+                    
+                    <!-- COURAGE STATE -->
+                    <div id="t-courage" class="absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 opacity-0 scale-90 pointer-events-none">
+                        <p class="font-impact font-black text-3xl md:text-5xl text-white uppercase tracking-widest mb-4 text-center">"I am <span class="text-urban-cyan">ready to</span><br><span class="text-urban-red">take a stand</span>."</p>
+                        <span class="font-mono text-black bg-urban-cyan font-bold text-xs uppercase tracking-widest px-3 py-1 rounded shadow-[0_0_15px_#00E5FF]">Emotion + Action</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center gap-4 shrink-0">
+                    <div class="tuner-track w-20 h-40" onclick="toggleCourage()">
+                        <div id="t-knob" class="tuner-knob w-16 h-16 left-1.5 top-2">
+                            <div class="w-8 h-1 bg-gray-500 rounded-full"></div>
+                        </div>
+                    </div>
+                    <span class="font-mono font-bold text-xs text-gray-500 tracking-widest">DRIVE</span>
+                </div>
+            </div>
+            <p class="text-gray-400 font-ui font-medium mt-10 text-center max-w-2xl text-lg">
+                Adding an <strong class="text-white">Adjective + TO</strong> before the verb explains the <span class="text-urban-cyan italic">reason</span> or emotion behind the action. Slide the drive up.
+            </p>
+        </section>
+
+        <!-- TRACK 16: SYNTAX BLUEPRINT -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 16</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Syntax Blueprint</h1>
+            
+            <div class="glass-panel p-10 md:p-14 rounded-[2rem] w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between text-center gap-8">
+                <div class="w-full md:w-1/3">
+                    <span class="block text-urban-cyan font-mono text-sm font-bold uppercase tracking-widest mb-4">Feeling (Adj)</span>
+                    <span class="text-4xl md:text-5xl font-black font-impact text-white">READY</span>
+                </div>
+                <div class="w-full md:w-1/3 flex flex-col items-center">
+                    <div class="bg-[#050510] text-white font-black text-3xl px-6 py-2 rounded-lg border-2 border-[#333]">+ TO +</div>
+                    <span class="mt-4 text-gray-500 font-mono text-xs uppercase font-bold tracking-widest">The Link</span>
+                </div>
+                <div class="w-full md:w-1/3">
+                    <span class="block text-urban-red font-mono text-sm font-bold uppercase tracking-widest mb-4">Action (Verb)</span>
+                    <span class="text-4xl md:text-5xl font-black font-impact text-white">GO</span>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex gap-4 text-gray-400 font-mono text-sm text-center">
+                <p>Other examples: <span class="text-white">Happy to see</span> / <span class="text-white">Afraid to fail</span> / <span class="text-white">Surprised to hear</span></p>
+            </div>
+        </section>
+
+        <!-- TRACK 17: BUILD THE WALL (Drill 1) -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 17</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Drill I</h1>
+            
+            <div class="glass-panel p-10 md:p-14 rounded-[2rem] w-full max-w-4xl mx-auto text-center border-t-2 border-[#333]">
+                <p class="font-impact font-black text-3xl md:text-5xl text-white uppercase tracking-wider mb-10">
+                    "I am happy <span class="text-urban-cyan border-b-4 border-urban-cyan px-6 pb-1">_______</span> you."
+                </p>
+                
+                <div class="grid grid-cols-2 gap-6 w-full max-w-2xl mx-auto options-group">
+                    <button class="mpc-pad p-6 rounded-xl font-impact font-black text-2xl text-gray-300 uppercase tracking-widest mcq-btn" onclick="selectMCQ(this, 'red', 'd1-hub')">Seeing</button>
+                    <button class="mpc-pad p-6 rounded-xl font-impact font-black text-2xl text-gray-300 uppercase tracking-widest mcq-btn" onclick="selectMCQ(this, 'cyan', 'd1-hub')">To see</button>
+                </div>
+                
+                <div id="d1-hub" class="hidden mt-8 font-mono text-urban-cyan font-bold tracking-widest uppercase">> Correct. Adjective + TO + Verb.</div>
+            </div>
+        </section>
+
+        <!-- TRACK 18: BUILD THE WALL (Drill 2) -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 18</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Drill II</h1>
+            
+            <div class="glass-panel p-10 md:p-14 rounded-[2rem] w-full max-w-4xl mx-auto text-center border-t-2 border-[#333]">
+                <p class="font-impact font-black text-3xl md:text-5xl text-white uppercase tracking-wider mb-10">
+                    "Are you ready to <span class="text-urban-red border-b-4 border-urban-red px-6 pb-1">_______</span>?"
+                </p>
+                
+                <div class="grid grid-cols-2 gap-6 w-full max-w-2xl mx-auto options-group">
+                    <button class="mpc-pad p-6 rounded-xl font-impact font-black text-2xl text-gray-300 uppercase tracking-widest mcq-btn" onclick="selectMCQ(this, 'red', 'd2-hub')">Left</button>
+                    <button class="mpc-pad p-6 rounded-xl font-impact font-black text-2xl text-gray-300 uppercase tracking-widest mcq-btn" onclick="selectMCQ(this, 'cyan', 'd2-hub')">Leave</button>
+                </div>
+                
+                <div id="d2-hub" class="hidden mt-8 font-mono text-urban-cyan font-bold tracking-widest uppercase">> Correct. After "to" we use the base verb.</div>
+            </div>
+        </section>
+
+        <!-- TRACK 19: CATCH THE BUG -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 19</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-urban-red mb-10 uppercase tracking-widest text-center flicker">Syntax Error</h1>
+
+            <div class="glass-panel p-16 rounded-[2rem] w-full max-w-4xl mx-auto text-center border-4 border-urban-red/30 shadow-neon-red">
+                <p class="font-impact font-black text-4xl md:text-6xl text-white uppercase tracking-wider">
+                    "I am not afraid <span class="text-urban-red border-b-4 border-urban-red cursor-pointer transition-colors hover:bg-urban-red hover:text-white" id="bug-text" onclick="fixBug()">take</span> a stand."
+                </p>
+                <div id="bug-hub" class="hidden mt-10 font-mono text-urban-cyan text-lg font-bold tracking-widest uppercase bg-urban-cyan/10 inline-block px-6 py-2 rounded">
+                    > Bug Patched: Missing Infinitive "TO"
+                </div>
+            </div>
+            <p class="font-mono text-gray-500 text-sm mt-8 text-center uppercase tracking-widest animate-pulse">Click the glitch to patch</p>
+        </section>
+
+        <!-- TRACK 20: THE SEQUENCER -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 20</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-6 uppercase tracking-widest text-center">The Sequencer</h1>
+            <p class="font-mono text-gray-400 text-sm mb-10 text-center uppercase tracking-widest">Load samples in exact order</p>
+
+            <div class="glass-panel p-10 md:p-16 rounded-[2rem] w-full max-w-5xl mx-auto text-center border-t-2 border-urban-cyan">
+                <div class="mb-16 flex flex-wrap justify-center items-center gap-3 font-impact font-black text-3xl md:text-4xl text-white uppercase tracking-wider">
+                    <span>"I'm not</span>
+                    <span class="seq-blank w-24 h-12 bg-black border-2 border-dashed border-[#444] rounded mx-2 inline-flex items-center justify-center text-urban-cyan transition-all" id="sb-1"></span>
+                    <span class="seq-blank w-16 h-12 bg-black border-2 border-dashed border-[#444] rounded mx-2 inline-flex items-center justify-center text-urban-cyan transition-all" id="sb-2"></span>
+                    <span>take a stand."</span>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-6" id="seq-bank">
+                    <button class="mpc-pad px-8 py-4 rounded-xl font-impact font-black text-2xl uppercase tracking-widest text-gray-300 hover:text-white" onclick="slotBrick(this, 'to')">to</button>
+                    <button class="mpc-pad px-8 py-4 rounded-xl font-impact font-black text-2xl uppercase tracking-widest text-gray-300 hover:text-white" onclick="slotBrick(this, 'afraid')">afraid</button>
+                    <button class="mpc-pad px-8 py-4 rounded-xl font-impact font-black text-2xl uppercase tracking-widest text-gray-300 hover:text-white" onclick="slotBrick(this, 'happy')">happy</button>
+                </div>
+            </div>
+            <div id="seq-hub" class="hidden mt-6 p-4 border border-emerald-500 bg-emerald-500/10 font-mono text-emerald-400 text-sm w-full max-w-5xl text-center rounded font-bold tracking-widest">> SEQUENCE LOCKED</div>
+        </section>
+
+        <!-- TRACK 21: PRONUNCIATION -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2">Track 21</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Connected Speech</h1>
+            
+            <div class="glass-panel p-10 md:p-14 rounded-[2rem] w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between text-center gap-8 border-t-2 border-[#333]">
+                <div class="w-full md:w-5/12 bg-black p-8 rounded-xl border border-[#222]">
+                    <span class="block text-gray-500 font-mono text-sm font-bold uppercase tracking-widest mb-4">Formal English</span>
+                    <span class="text-3xl font-black font-impact text-white tracking-widest uppercase">Afraid <span class="text-urban-cyan">to</span> take</span>
+                </div>
+                <div class="text-4xl text-gray-600 hidden md:block"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="w-full md:w-5/12 bg-[#050510] p-8 rounded-xl border border-urban-cyan shadow-neon-cyan">
+                    <span class="block text-urban-cyan font-mono text-sm font-bold uppercase tracking-widest mb-4">Rapper Slang</span>
+                    <span class="text-3xl font-black font-impact text-white tracking-widest uppercase">Afraid <span class="text-urban-cyan">TA</span> take</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 22: PAPARAZZI (RAPID FIRE SPEAKING) -->
+        <section class="slide" id="slide-paparazzi">
+            <h2 class="font-mono text-white bg-urban-red px-3 py-1 text-xs font-bold uppercase tracking-[0.3em] mb-4 rounded inline-block">Track 22</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-6 uppercase tracking-widest text-center">Paparazzi</h1>
+            <p class="font-ui text-gray-300 text-lg mb-10 text-center max-w-2xl font-medium">You are the artist. The press is attacking. You have <strong class="text-white">10 seconds</strong> to answer each question using "I am ready to..." or "I am not afraid to...".</p>
+
+            <div class="glass-panel p-10 rounded-[2rem] w-full max-w-4xl mx-auto text-center border border-[#333] relative overflow-hidden" id="pap-container">
+                <div class="text-6xl mb-6 flicker">📸</div>
+                <p class="font-impact font-black text-3xl md:text-5xl text-white uppercase tracking-wider mb-10" style="text-shadow: 0 4px 10px rgba(0,0,0,0.8);" id="pap-q">"Why did you change your style?!"</p>
+                
+                <div class="w-full h-2 bg-[#111] rounded-full mb-8 overflow-hidden">
+                    <div id="pap-timer" class="h-full bg-white w-full transition-all linear"></div>
+                </div>
+
+                <button id="pap-btn" onclick="startPaparazzi()" class="mpc-pad px-10 py-4 rounded-xl font-heading font-black text-2xl uppercase tracking-widest text-urban-red border-urban-red hover:bg-urban-red hover:text-white transition-colors shadow-neon-red">Start Conference</button>
+            </div>
+        </section>
+
+        <!-- TRACK 23: VOICE NOTE SIMULATOR -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-cyan text-xs font-bold uppercase tracking-[0.3em] mb-2 text-center">Track 23</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Voice Note</h1>
+
+            <div class="w-full max-w-[360px] mx-auto bg-[#0a0a0a] rounded-[3rem] border-[12px] border-[#1a1a24] h-[650px] shadow-[0_20px_50px_rgba(0,0,0,0.9)] relative flex flex-col overflow-hidden">
+                <div class="bg-[#1a1a24] p-4 text-center border-b border-[#333]">
+                    <p class="font-ui font-bold text-white">Friend 💬</p>
+                </div>
+                
+                <div class="flex-1 p-4 flex flex-col gap-4 overflow-y-auto bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-black/50">
+                    <div class="bg-[#222] text-white p-4 rounded-2xl rounded-tl-sm self-start max-w-[85%] font-ui text-sm shadow-md border border-[#333]">
+                        Hey... I'm terrified of quitting my toxic job tomorrow. I don't know what to do. 😔
+                    </div>
+                </div>
+
+                <div class="bg-[#1a1a24] p-6 border-t border-[#333] flex flex-col items-center justify-center h-48 relative">
+                    <p class="font-mono text-urban-cyan text-[10px] mb-4 font-bold tracking-widest uppercase text-center">Hold 45s to record advice.<br>Use: "Don't be afraid to..."</p>
+                    
+                    <button id="vn-btn" onmousedown="startVN()" onmouseup="stopVN()" onmouseleave="stopVN()" ontouchstart="startVN()" ontouchend="stopVN()" class="w-20 h-20 rounded-full bg-urban-cyan flex items-center justify-center text-[#111] text-3xl shadow-[0_0_20px_#00E5FF] transition-transform active:scale-95">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+
+                    <div id="vn-overlay" class="absolute inset-0 bg-[#1a1a24] flex items-center justify-center gap-4 opacity-0 pointer-events-none transition-opacity px-6">
+                        <div class="w-3 h-3 bg-urban-red rounded-full animate-pulse"></div>
+                        <div class="flex-1 h-2 bg-[#111] rounded-full overflow-hidden border border-[#333]">
+                            <div id="vn-prog" class="h-full bg-urban-red w-0"></div>
+                        </div>
+                        <span id="vn-time" class="font-mono text-urban-red font-bold text-sm">0:00</span>
+                    </div>
+                </div>
+            </div>
+            <div id="vn-hub" class="hidden mt-6 text-center font-mono text-urban-cyan font-bold tracking-widest uppercase animate-pulse">> Audio message sent successfully.</div>
+        </section>
+
+        <!-- TRACK 24: THE CROSSROADS -->
+        <section class="slide">
+            <h2 class="font-mono text-white text-xs font-bold uppercase tracking-[0.3em] mb-2 text-center">Track 24</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">The Crossroads</h1>
+
+            <div class="w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-6 items-stretch h-full min-h-[400px]">
+                <!-- Context -->
+                <div class="md:w-1/3 glass-panel p-8 text-center flex flex-col justify-center border-t-2 border-gray-500">
+                    <i class="fa-solid fa-scale-balanced text-4xl text-gray-400 mb-6"></i>
+                    <p class="font-ui font-medium text-lg text-white mb-4">You see your boss stealing money from the company.</p>
+                    <p class="font-mono text-xs text-gray-400 uppercase tracking-widest">Choose a path. Defend it non-stop for 30s.</p>
+                </div>
+
+                <!-- Options -->
+                <div class="md:w-2/3 flex flex-col gap-4 relative" id="cross-options">
+                    <button onclick="selectPath('red')" class="flex-1 mpc-pad rounded-2xl border-l-8 border-l-urban-red flex flex-col justify-center p-8 text-left group hover:bg-[#1a0505]">
+                        <h3 class="font-impact font-black text-3xl text-white uppercase tracking-wider mb-2 group-hover:text-urban-red transition-colors">Take a Stand</h3>
+                        <p class="font-ui text-gray-400">Report him. Risk losing your job, but do the right thing.</p>
+                    </button>
+                    <button onclick="selectPath('cyan')" class="flex-1 mpc-pad rounded-2xl border-l-8 border-l-urban-cyan flex flex-col justify-center p-8 text-left group hover:bg-[#001a1f]">
+                        <h3 class="font-impact font-black text-3xl text-white uppercase tracking-wider mb-2 group-hover:text-urban-cyan transition-colors">Stay Quiet</h3>
+                        <p class="font-ui text-gray-400">Protect your career. Keep quiet and survive.</p>
+                    </button>
+                </div>
+
+                <!-- Timer Screen (Hidden initially) -->
+                <div class="md:w-2/3 hidden glass-panel rounded-2xl flex-col items-center justify-center p-10 border-t-4" id="cross-timer">
+                    <h3 class="font-heading font-black text-3xl text-white mb-6 uppercase tracking-widest text-center" id="ct-title">Defend your choice!</h3>
+                    <div class="w-full h-4 bg-[#111] rounded-full mb-8 overflow-hidden shadow-inner border border-[#333]">
+                        <div id="ct-bar" class="h-full w-full transition-all linear"></div>
+                    </div>
+                    <p class="font-mono text-4xl font-bold" id="ct-clock">0:30</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK 25: PLATINUM RECORD -->
+        <section class="slide">
+            <h2 class="font-mono text-urban-red text-xs font-bold uppercase tracking-[0.3em] mb-2 text-center">Track 25</h2>
+            <h1 class="font-heading font-black text-4xl md:text-5xl text-white mb-10 uppercase tracking-widest text-center">Review</h1>
+            
+            <div class="text-center flex flex-col items-center justify-center w-full">
+                <div class="flex justify-center gap-4 md:gap-6 mb-12">
+                    <button onclick="rateSong(1)" class="star-btn text-5xl md:text-6xl opacity-30 hover:opacity-100 transition-all grayscale hover:grayscale-0 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">⭐</button>
+                    <button onclick="rateSong(2)" class="star-btn text-5xl md:text-6xl opacity-30 hover:opacity-100 transition-all grayscale hover:grayscale-0 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">⭐</button>
+                    <button onclick="rateSong(3)" class="star-btn text-5xl md:text-6xl opacity-30 hover:opacity-100 transition-all grayscale hover:grayscale-0 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">⭐</button>
+                    <button onclick="rateSong(4)" class="star-btn text-5xl md:text-6xl opacity-30 hover:opacity-100 transition-all grayscale hover:grayscale-0 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">⭐</button>
+                    <button onclick="rateSong(5)" class="star-btn text-5xl md:text-6xl opacity-30 hover:opacity-100 transition-all grayscale hover:grayscale-0 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">⭐</button>
+                </div>
+
+                <div id="final-hub" class="hidden flex flex-col items-center">
+                    <h1 class="font-impact font-black text-6xl md:text-8xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 uppercase tracking-tighter mb-4 drop-shadow-lg">Platinum</h1>
+                    <p class="font-mono text-urban-cyan text-lg font-bold uppercase tracking-widest mb-10">You survived the storm.</p>
+                    <button onclick="goToSlide(0)" class="mpc-pad px-12 py-5 rounded-xl font-heading font-black text-xl uppercase tracking-widest text-white border-white hover:bg-white hover:text-black transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]">Restart Session</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- BOTTOM MPC CONSOLE -->
+    <footer class="h-[100px] bg-[#050508] border-t-2 border-[#1a1a24] shadow-[0_-10px_50px_rgba(0,0,0,0.9)] relative z-40 px-6 flex items-center justify-between">
+        <!-- Track LCD -->
+        <div class="w-1/3 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-[#111] shadow-lg border border-[#333] vinyl-spin overflow-hidden hidden lg:block">
+                <img src="https://static.posters.cz/image/1300/8504.jpg" class="w-full h-full object-cover opacity-60 grayscale">
+            </div>
+            <div class="bg-[#020202] border-2 border-[#1a1a24] rounded-lg p-3 w-48 shadow-inner relative overflow-hidden flex flex-col justify-center">
+                <div class="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.03)_1px,transparent_1px)] bg-[length:100%_2px] pointer-events-none"></div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-mono text-urban-cyan text-[10px] font-bold tracking-widest uppercase">TRK <span id="lcd-num">01</span>/25</span>
+                </div>
+                <div class="w-full bg-[#111] h-1.5 rounded-full overflow-hidden border border-[#222]">
+                    <div id="lcd-prog" class="h-full bg-urban-cyan w-0 transition-all duration-300 shadow-[0_0_5px_#00E5FF]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transport Pads & Signature -->
+        <div class="w-1/3 flex flex-col justify-center items-center gap-1">
+            <div class="flex items-center gap-4 md:gap-6">
+                <button onclick="prevSlide()" id="btn-prev" class="mpc-pad w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-30">
+                    <i class="fa-solid fa-backward-step text-sm"></i>
+                </button>
+                <button onclick="togglePlay()" class="mpc-pad w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-urban-red border-urban-red shadow-neon-red bg-[#1a0505]">
+                    <i id="icon-play" class="fa-solid fa-play ml-1 hidden text-lg"></i>
+                    <i id="icon-pause" class="fa-solid fa-pause text-lg"></i>
+                </button>
+                <button onclick="nextSlide()" id="btn-next" class="mpc-pad w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-30">
+                    <i class="fa-solid fa-forward-step text-sm"></i>
+                </button>
+            </div>
+            <span class="font-mono text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1">Wolffy Powered by Wolf Labs</span>
+        </div>
+
+        <!-- Tool Pads -->
+        <div class="w-1/3 flex justify-end items-center gap-4">
+            <button onclick="toggleTerminal()" class="mpc-pad w-12 h-12 rounded-lg flex items-center justify-center text-gray-500 hover:text-urban-cyan">
+                <i class="fa-solid fa-terminal"></i>
+            </button>
+            <button onclick="toggleDict()" class="mpc-pad px-4 py-3 rounded-lg flex items-center gap-2 text-gray-500 hover:text-urban-cyan group">
+                <i class="fa-solid fa-book"></i> <span class="font-mono text-[10px] font-bold uppercase tracking-widest hidden lg:inline">Dict</span>
+            </button>
+            <button onclick="toggleFS()" class="mpc-pad w-12 h-12 rounded-lg hidden md:flex items-center justify-center text-gray-500 hover:text-white">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+        </div>
+    </footer>
+
+    <!-- TEACHER TERMINAL (Left Drawer) -->
+    <aside id="terminal-panel" class="fixed top-0 left-0 h-full w-full md:w-[400px] bg-[#050508] border-r-2 border-[#1a1a24] z-[100] drawer-left flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.9)] pb-[100px]">
+        <div class="p-6 border-b border-[#1a1a24] flex justify-between items-center bg-[#020202]">
+            <h2 class="font-impact font-black text-2xl text-urban-cyan uppercase tracking-widest"><i class="fa-solid fa-terminal mr-2"></i> Terminal</h2>
+            <button onclick="toggleTerminal()" class="text-gray-500 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="p-6 border-b border-[#1a1a24] bg-black flex gap-4">
+            <button onclick="triggerPraise('EPIC!')" class="flex-1 bg-urban-cyan/10 border border-urban-cyan text-urban-cyan font-bold font-mono text-sm py-2 rounded hover:bg-urban-cyan hover:text-black transition-colors">EPIC</button>
+            <button onclick="triggerPraise('FLAWLESS!')" class="flex-1 bg-urban-red/10 border border-urban-red text-urban-red font-bold font-mono text-sm py-2 rounded hover:bg-urban-red hover:text-white transition-colors">FLAWLESS</button>
+        </div>
+        <div class="flex-1 p-6 relative">
+            <textarea class="absolute inset-0 w-full h-full bg-transparent p-6 text-gray-300 font-mono resize-none focus:outline-none placeholder-gray-600" placeholder="> Input class notes..."></textarea>
+        </div>
+    </aside>
+
+    <!-- SMART DICT (Right Drawer) -->
+    <aside id="dict-panel" class="fixed top-0 right-0 h-full w-full md:w-[400px] bg-[#050508] border-l-2 border-[#1a1a24] z-[100] drawer-right flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.9)] pb-[100px]">
+        <div class="p-6 border-b border-[#1a1a24] flex justify-between items-center bg-[#020202]">
+            <h2 class="font-impact font-black text-2xl text-urban-cyan uppercase tracking-widest"><i class="fa-solid fa-satellite-dish mr-2"></i> Database</h2>
+            <button onclick="toggleDict()" class="text-gray-500 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="p-8 flex-1 overflow-y-auto" id="dict-content">
+            <div class="h-full flex flex-col items-center justify-center text-center opacity-30">
+                <i class="fa-solid fa-fingerprint text-5xl mb-6"></i>
+                <p class="font-mono font-bold text-sm">Double-click words on screen to fetch translation data.</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- LYRIC INSIGHT MODAL -->
+    <div id="lyric-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm px-4">
+        <div class="glass-panel border-t-4 border-urban-cyan p-10 md:p-14 rounded-[2rem] w-full max-w-2xl transform scale-95 transition-transform duration-300" id="l-card">
+            <button onclick="closeLyric()" class="absolute top-6 right-6 w-10 h-10 bg-[#020202] rounded-full border border-[#333] text-gray-500 hover:text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
+            <span class="font-mono text-black bg-urban-cyan font-bold px-3 py-1 text-[10px] uppercase tracking-widest rounded shadow-[0_0_10px_#00E5FF]">Deep Dive</span>
+            <h2 class="font-heading font-black text-4xl md:text-5xl text-white uppercase tracking-tight mt-4 mb-6" id="l-title">Word</h2>
+            <p class="font-ui text-xl text-gray-300 border-l-2 border-urban-cyan pl-4 mb-8" id="l-exp">Definition...</p>
+            <div class="bg-[#020202] p-6 md:p-8 rounded-2xl border border-[#1a1a24]">
+                <p class="font-mono font-bold text-urban-red mb-6">> <span id="l-q">Question</span></p>
+                <div class="flex flex-col gap-3" id="l-opts"></div>
+                <div id="l-fb" class="hidden mt-6 text-center font-impact font-black text-2xl text-emerald-500 uppercase tracking-widest animate-pulse">Accepted.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRAISE OVERLAY -->
+    <div id="praise-overlay" class="fixed inset-0 z-[300] flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 bg-black/80 backdrop-blur-sm">
+        <div id="praise-card" class="bg-black border-4 border-urban-cyan p-16 rounded-[2rem] text-center transform scale-50 transition-all duration-500 shadow-neon-cyan">
+            <h1 id="praise-text" class="text-6xl md:text-8xl font-black font-impact text-white tracking-widest uppercase">EPIC!</h1>
+        </div>
+    </div>
+
+    <script>
+        // --- CORE NAVIGATION (25 Tracks) ---
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        let isPlaying = true;
+
+        function init() { updateUI(); }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                slides[currentSlide].classList.remove('active');
+                currentSlide++;
+                slides[currentSlide].classList.add('active');
+                updateUI();
+            }
+        }
+        function prevSlide() {
+            if (currentSlide > 0) {
+                slides[currentSlide].classList.remove('active');
+                currentSlide--;
+                slides[currentSlide].classList.add('active');
+                updateUI();
+            }
+        }
+        function goToSlide(i) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = i;
+            slides[currentSlide].classList.add('active');
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('btn-prev').disabled = currentSlide === 0;
+            document.getElementById('btn-next').disabled = currentSlide === totalSlides - 1;
+            
+            const trkNum = (currentSlide + 1).toString().padStart(2, '0');
+            document.getElementById('lcd-num').innerText = trkNum;
+            document.getElementById('lcd-prog').style.width = `${(currentSlide / (totalSlides - 1)) * 100}%`;
+            document.getElementById('stage').scrollTop = 0;
+            
+            clearInterval(papInt); clearInterval(crossInt);
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('icon-play').classList.toggle('hidden', isPlaying);
+            document.getElementById('icon-pause').classList.toggle('hidden', !isPlaying);
+            const vinyl = document.querySelector('.vinyl-spin');
+            if(vinyl) vinyl.classList.toggle('vinyl-paused', !isPlaying);
+        }
+
+        function toggleFS() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+            else document.exitFullscreen();
+        }
+
+        // --- DRAWERS & API ---
+        function toggleTerminal() { document.getElementById('terminal-panel').classList.toggle('open'); }
+        function toggleDict() { document.getElementById('dict-panel').classList.toggle('open'); }
+        
+        document.addEventListener('dblclick', async (e) => {
+            if(e.target.tagName === 'BUTTON' || e.target.tagName === 'TEXTAREA') return;
+            const word = window.getSelection().toString().trim();
+            if(word && /^[a-zA-Z]+$/.test(word)) fetchDict(word);
+        });
+
+        async function fetchDict(word) {
+            document.getElementById('dict-panel').classList.add('open');
+            const cont = document.getElementById('dict-content');
+            cont.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-urban-cyan"><i class="fa-solid fa-circle-notch fa-spin text-4xl mb-4"></i></div>`;
+            try {
+                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
+                const data = await res.json();
+                if(data.title) throw new Error();
+                const entry = data[0];
+                cont.innerHTML = `
+                    <div class="mb-8">
+                        <h2 class="font-impact font-black text-4xl text-white uppercase tracking-widest">${entry.word}</h2>
+                        <span class="font-mono text-urban-cyan text-[10px] font-bold uppercase tracking-widest">> ${entry.meanings[0].partOfSpeech}</span>
+                    </div>
+                    <div class="bg-[#020202] border border-[#1a1a24] p-6 rounded-xl">
+                        <p class="font-ui text-gray-300 text-lg leading-relaxed">${entry.meanings[0].definitions[0].definition}</p>
+                    </div>
+                `;
+            } catch(e) {
+                cont.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-urban-red"><i class="fa-solid fa-triangle-exclamation text-4xl mb-4"></i><p class="font-mono text-sm uppercase">Data not found</p></div>`;
+            }
+        }
+
+        function triggerPraise(txt) {
+            toggleTerminal();
+            const ov = document.getElementById('praise-overlay');
+            const card = document.getElementById('praise-card');
+            document.getElementById('praise-text').innerText = txt;
+            ov.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => card.classList.replace('scale-50', 'scale-100'), 50);
+            shootConfetti();
+            setTimeout(() => { card.classList.replace('scale-100', 'scale-50'); ov.classList.add('opacity-0', 'pointer-events-none'); }, 2000);
+        }
+
+        // --- INTERACTIVE MECHANICS ---
+        function selectMCQ(btn, color, hub) {
+            const group = btn.parentElement;
+            group.querySelectorAll('.mcq-btn').forEach(b => {
+                b.classList.remove('selected-red', 'selected-cyan');
+                if(b.querySelector('div')) b.querySelector('div').classList.remove('text-urban-red', 'text-urban-cyan');
+            });
+            btn.classList.add('selected-' + color);
+            if(btn.querySelector('div')) btn.querySelector('div').classList.add('text-urban-' + color);
+            document.getElementById(hub).classList.remove('hidden');
+            shootConfetti(1);
+        }
+
+        // --- ACTIVE LEXICON MATCHING ---
+        let activeLexWord = null;
+        let activeLexBtn = null;
+
+        function selectLexWord(btn, word) {
+            const bank = btn.parentElement;
+            bank.querySelectorAll('.lex-word-btn').forEach(b => {
+                if(!b.disabled) {
+                    b.classList.remove('selected-cyan', 'text-urban-cyan');
+                    b.classList.add('text-gray-300');
+                }
+            });
+            btn.classList.remove('text-gray-300');
+            btn.classList.add('selected-cyan', 'text-urban-cyan');
+            activeLexWord = word;
+            activeLexBtn = btn;
+        }
+
+        function attemptLexMatch(targetBtn, expectedWord, followId) {
+            if(!activeLexWord) {
+                targetBtn.classList.add('shake');
+                setTimeout(()=>targetBtn.classList.remove('shake'), 400);
+                return;
+            }
+
+            if(activeLexWord === expectedWord) {
+                // Success
+                targetBtn.innerText = expectedWord.toUpperCase();
+                targetBtn.classList.remove('border-dashed', 'border-[#555]', 'text-gray-500', 'bg-black/50', 'hover:border-urban-cyan', 'hover:text-urban-cyan');
+                targetBtn.classList.add('border-solid', 'border-urban-cyan', 'text-black', 'bg-urban-cyan', 'shadow-[0_0_15px_#00E5FF]');
+                targetBtn.disabled = true;
+
+                activeLexBtn.disabled = true;
+                activeLexBtn.style.opacity = '0';
+                activeLexBtn.style.pointerEvents = 'none';
+
+                activeLexWord = null;
+                activeLexBtn = null;
+
+                document.getElementById(followId).classList.remove('hidden');
+                shootConfetti(1);
+            } else {
+                // Wrong Match
+                targetBtn.classList.add('shake', 'border-urban-red', 'text-urban-red');
+                setTimeout(()=>targetBtn.classList.remove('shake', 'border-urban-red', 'text-urban-red'), 400);
+            }
+        }
+
+        function toggleCourage() {
+            const knob = document.getElementById('t-knob');
+            const fear = document.getElementById('t-fear');
+            const cour = document.getElementById('t-courage');
+            const bg = document.getElementById('rain-bg');
+
+            if(knob.classList.contains('translate-y-[84px]')) {
+                knob.classList.remove('translate-y-[84px]');
+                fear.classList.replace('opacity-0','opacity-100'); fear.classList.replace('scale-90','scale-100'); fear.classList.replace('pointer-events-none','pointer-events-auto');
+                cour.classList.replace('opacity-100','opacity-0'); cour.classList.replace('scale-100','scale-90'); cour.classList.replace('pointer-events-auto','pointer-events-none');
+                document.getElementById('t-panel').classList.remove('border-urban-cyan', 'shadow-neon-cyan');
+                bg.style.background = 'radial-gradient(circle at 50% 0%, rgba(255, 23, 68, 0.05) 0%, transparent 50%), radial-gradient(circle at 50% 100%, rgba(0, 229, 255, 0.05) 0%, transparent 50%)';
+            } else {
+                knob.classList.add('translate-y-[84px]');
+                fear.classList.replace('opacity-100','opacity-0'); fear.classList.replace('scale-100','scale-90'); fear.classList.replace('pointer-events-auto','pointer-events-none');
+                cour.classList.replace('opacity-0','opacity-100'); cour.classList.replace('scale-90','scale-100'); cour.classList.replace('pointer-events-none','pointer-events-auto');
+                document.getElementById('t-panel').classList.add('border-urban-cyan', 'shadow-neon-cyan');
+                bg.style.background = 'radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.15) 0%, transparent 70%)';
+                shootConfetti();
+            }
+        }
+
+        let actSlot = 1;
+        const expSlot = {1: 'afraid', 2: 'to'};
+        function slotBrick(btn, w) {
+            if(actSlot > 2) return;
+            if(w === expSlot[actSlot]) {
+                const b = document.getElementById('sb-' + actSlot);
+                b.innerText = w.toUpperCase();
+                b.classList.remove('border-dashed'); b.classList.add('bg-urban-cyan/10', 'border-urban-cyan', 'shadow-[inset_0_0_10px_#00E5FF]');
+                btn.disabled = true;
+                actSlot++;
+                if(actSlot > 2) { document.getElementById('seq-hub').classList.remove('hidden'); shootConfetti(); }
+            } else {
+                btn.classList.add('shake'); setTimeout(()=>btn.classList.remove('shake'), 400);
+            }
+        }
+
+        function fixBug() {
+            const b = document.getElementById('bug-text');
+            b.innerText = "TO TAKE";
+            b.classList.remove('border-urban-red', 'text-urban-red', 'hover:bg-urban-red');
+            b.classList.add('text-urban-cyan', 'border-urban-cyan');
+            document.querySelector('.flicker').classList.remove('flicker', 'text-urban-red');
+            document.querySelector('.flicker') ? document.querySelector('.flicker').classList.add('text-urban-cyan') : null;
+            document.getElementById('bug-hub').classList.remove('hidden');
+            shootConfetti();
+        }
+
+        // --- SIMULATORS ---
+        
+        // 1. Paparazzi
+        const papQ = ["Why did you change your style?!", "Are you hiding from the media?!", "What are you really afraid of?!"];
+        let papIdx = 0; let papInt;
+        function startPaparazzi() {
+            document.getElementById('pap-btn').style.display = 'none';
+            document.getElementById('pap-container').classList.add('border-white', 'shadow-[0_0_50px_rgba(255,255,255,0.2)]');
+            runPapRound();
+        }
+        function runPapRound() {
+            if(papIdx >= papQ.length) {
+                document.getElementById('pap-q').innerText = "NO MORE QUESTIONS.";
+                document.getElementById('pap-q').classList.replace('text-white', 'text-gray-500');
+                document.getElementById('pap-timer').style.width = '0%';
+                shootConfetti(2);
+                return;
+            }
+            document.body.classList.add('paparazzi-flash');
+            setTimeout(() => document.body.classList.remove('paparazzi-flash'), 500);
+            document.getElementById('pap-q').innerText = '"' + papQ[papIdx] + '"';
+            
+            let w = 100; const bar = document.getElementById('pap-timer');
+            clearInterval(papInt);
+            papInt = setInterval(() => {
+                w -= (100/100); 
+                bar.style.width = w + '%';
+                if(w <= 0) { clearInterval(papInt); papIdx++; runPapRound(); }
+            }, 100);
+        }
+
+        // 2. Voice Note
+        let vnInt; let vnSecs = 0;
+        function startVN() {
+            const btn = document.getElementById('vn-btn');
+            btn.classList.replace('bg-urban-cyan', 'bg-urban-red');
+            btn.classList.replace('shadow-[0_0_20px_#00E5FF]', 'shadow-neon-red');
+            document.getElementById('vn-overlay').classList.remove('opacity-0', 'pointer-events-none');
+            vnSecs = 0;
+            vnInt = setInterval(() => {
+                vnSecs++;
+                document.getElementById('vn-time').innerText = `0:${vnSecs.toString().padStart(2,'0')}`;
+                document.getElementById('vn-prog').style.width = `${(vnSecs/45)*100}%`;
+                if(vnSecs >= 45) stopVN();
+            }, 1000);
+        }
+        function stopVN() {
+            clearInterval(vnInt);
+            const btn = document.getElementById('vn-btn');
+            btn.classList.replace('bg-urban-red', 'bg-urban-cyan');
+            btn.classList.replace('shadow-neon-red', 'shadow-[0_0_20px_#00E5FF]');
+            document.getElementById('vn-overlay').classList.add('opacity-0', 'pointer-events-none');
+            if(vnSecs > 3) { document.getElementById('vn-hub').classList.remove('hidden'); shootConfetti(); }
+        }
+
+        // 3. The Crossroads
+        let crossInt;
+        function selectPath(color) {
+            document.getElementById('cross-options').style.display = 'none';
+            const tmr = document.getElementById('cross-timer');
+            tmr.classList.replace('hidden', 'flex');
+            tmr.classList.add('border-urban-' + color, 'shadow-neon-' + color);
+            
+            let w = 100; let secs = 30;
+            const bar = document.getElementById('ct-bar');
+            bar.classList.add('bg-urban-' + color);
+            
+            crossInt = setInterval(() => {
+                w -= (100/300); bar.style.width = w + '%';
+                if(w % (100/30) < (100/300)) { secs--; document.getElementById('ct-clock').innerText = `0:${secs.toString().padStart(2,'0')}`; }
+                if(w <= 0) { clearInterval(crossInt); document.getElementById('ct-title').innerText = "TIME'S UP."; shootConfetti(); }
+            }, 100);
+        }
+
+        // --- LYRIC MODAL ---
+        function openLyric(k) {
+            const data = {
+                'afraid': {t:'Afraid', e:'Feeling fear.', q:'What is your biggest fear?', o:['Heights.','Failure.']},
+                'stand': {t:'Take a stand', e:'Defend your opinion.', q:'Is it hard to take a stand?', o:['Yes, it requires courage.','No, I speak my mind.']},
+                'together': {t:'Together', e:'With others.', q:'Do you prefer working alone or together?', o:['Alone.','Together.']},
+                'storm': {t:'Storm', e:'A difficult period.', q:'How do you survive a storm?', o:['I ask for help.','I stay strong.']},
+                'weather': {t:'Weather', e:'External conditions.', q:'Does the weather affect your mood?', o:['Yes.','No.']}
+            }[k];
+            if(!data) return;
+            
+            document.getElementById('l-title').innerText = data.t;
+            document.getElementById('l-exp').innerText = data.e;
+            document.getElementById('l-q').innerText = data.q;
+            
+            const cont = document.getElementById('l-opts'); cont.innerHTML = '';
+            data.o.forEach(o => {
+                const b = document.createElement('button');
+                b.className = 'bg-[#111] border border-[#333] p-4 rounded-xl text-left font-ui font-bold text-gray-300 hover:text-white hover:border-urban-cyan transition-colors';
+                b.innerText = o;
+                b.onclick = () => { document.getElementById('l-fb').classList.remove('hidden'); shootConfetti(0.5); };
+                cont.appendChild(b);
+            });
+            document.getElementById('l-fb').classList.add('hidden');
+            
+            const mod = document.getElementById('lyric-modal');
+            mod.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => document.getElementById('l-card').classList.replace('scale-95', 'scale-100'), 50);
+        }
+        function closeLyric() {
+            document.getElementById('l-card').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('lyric-modal').classList.add('opacity-0', 'pointer-events-none'), 200);
+        }
+
+        // --- FINAL REVIEW ---
+        function rateSong(stars) {
+            const allStars = document.querySelectorAll('.star-btn');
+            allStars.forEach((star, idx) => {
+                if(idx < stars) star.classList.remove('opacity-30', 'grayscale');
+                else { star.classList.add('opacity-30', 'grayscale'); }
+            });
+            document.getElementById('final-hub').classList.remove('hidden');
+            shootConfetti();
+        }
+
+        function shootConfetti(sec=1) {
+            var duration = sec * 1000; var end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#FF1744', '#00E5FF', '#FFFFFF'] });
+                confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#FF1744', '#00E5FF', '#FFFFFF'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
